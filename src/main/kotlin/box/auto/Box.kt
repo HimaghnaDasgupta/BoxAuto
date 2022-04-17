@@ -31,11 +31,7 @@ class Box (val n: Int = 3, val line:Long=0, var box: Long=0, val player: Player 
     var winner:Player? = null
 
     init {
-        (0 until n*n).forEach {
-            if (boundaryLinesOfBox(it).all { l -> isOccupiedLine(l) } && getBoxOccupiedBy(it)==Player.None) {
-                setBoxOccupiedBy(it, player)
-            }
-        }
+        box = occupy(box)
         val map = mutableMapOf(Pair(Player.None, 0), Pair(Player.A, 0), Pair(Player.B, 0))
         (0 until n*n).map { getBoxOccupiedBy(it) }.forEach { map[it] = map[it]!! + 1 }
         val max = map.keys.maxOf { map[it]!! }
@@ -83,7 +79,7 @@ class Box (val n: Int = 3, val line:Long=0, var box: Long=0, val player: Player 
 
     fun isOccupiedLine(int: Int): Boolean = (line and  (1L shl int)) > 0
 
-    fun setOccupiedLine(int: Int): Box = Box(n, line or  (1L shl int), box, player.opponent())
+    fun setOccupiedLine(int: Int): Box = Box(n, line or  (1L shl int), box, if(box==occupy(box)) player.opponent() else player)
 
     fun boundaryLinesOfBox(int: Int): List<Int> {
         val top = (2*n+1)* (int/n)+ int%n
@@ -101,6 +97,16 @@ class Box (val n: Int = 3, val line:Long=0, var box: Long=0, val player: Player 
             println()
         }
         return Player.values()[p]
+    }
+
+    fun occupy(b: Long): Long {
+        var box = b
+        (0 until n*n).forEach {
+            if (boundaryLinesOfBox(it).all { l -> isOccupiedLine(l) } && getBoxOccupiedBy(it)==Player.None) {
+                box = (box and (3L shl (it * 2)).inv()) or (player.ordinal.toLong() shl (it * 2))
+            }
+        }
+        return box
     }
 
     fun setBoxOccupiedBy(int: Int, player: Player): Unit {

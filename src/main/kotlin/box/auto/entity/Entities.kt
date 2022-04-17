@@ -5,7 +5,7 @@ import javax.persistence.*
 
 @Entity
 @Table
-class BoxEntities(
+class BoxEntities3(
     @javax.persistence.Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -18,7 +18,7 @@ class BoxEntities(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as BoxEntities
+        other as BoxEntities3
 
         if (props != other.props) return false
 
@@ -33,7 +33,7 @@ class BoxEntities(
 
 @Entity
 @Table
-class BoxRelation(@EmbeddedId val id: Relation?) {
+class BoxRelation3(@EmbeddedId val id: Relation?) {
     constructor() : this(null)
 }
 
@@ -41,10 +41,10 @@ class BoxRelation(@EmbeddedId val id: Relation?) {
 class Relation(
     @OneToOne
     @JoinColumn(name = "parent", referencedColumnName = "id")
-    val parent: BoxEntities?,
+    val parent: BoxEntities3?,
     @OneToOne
     @JoinColumn(name = "child", referencedColumnName = "id")
-    val child: BoxEntities?
+    val child: BoxEntities3?
 ) : java.io.Serializable {
     constructor() : this(null, null)
 

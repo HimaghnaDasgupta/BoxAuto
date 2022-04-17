@@ -1,8 +1,8 @@
 package box.auto.service
 
 import box.auto.Box
-import box.auto.entity.BoxEntities
-import box.auto.entity.BoxRelation
+import box.auto.entity.BoxEntities3
+import box.auto.entity.BoxRelation3
 import box.auto.entity.Id
 import box.auto.entity.Relation
 import box.auto.repositories.BoxRelationRepository
@@ -45,12 +45,12 @@ class BoxServices {
 
         val relation = Relation(p, c)
 
-        boxRelationRepository.save(BoxRelation(relation))
+        boxRelationRepository.save(BoxRelation3(relation))
     }
 
     @Transactional
     fun save(box: Box) {
-        boxRepositories.save(BoxEntities(props = Id(box.line, box.box, box.player)))
+        boxRepositories.save(BoxEntities3(props = Id(box.line, box.box, box.player)))
     }
 
     fun processing():Long = boxRepositories.countByProcessedTrue()
