@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script>
+      const n =[[${n}]]
+      var pid = null
+      function resize() {
+          const dim= Math.floor(($(window).height() - 20*(n+1)) / n)
+          $(".horizontal-button").attr("width", dim);
+          $(".vertical-button").attr("height", dim);
+      }
+      $(document).ready(function(){
+          resize()
+          $(window).resize(function() {
+              resize()
+          })
+<!--          $(window).on("beforeunload", function() {-->
+<!--            disconnect()-->
+<!--            return true-->
+<!--          })-->
+          $("#main-table").hide()
+          $("#players").hide()
+          connect()
+        });
+
+        function connect() {
+            /*<![CDATA[*/
+            var url = /*[['ws://'+${#httpServletRequest.serverName}+':'+${#httpServletRequest.serverPort}+@{/web-socket}]]*/ 'ws://localhost:8080/web-socket';
+            /*]]>*/
+            ws = new WebSocket(url);
+            ws.onopen = function () {
+                ws.send(JSON.stringify({'message':'setN','value': n}));
+            };
+            ws.onmessage = function (message) {
+                const data = JSON.parse(message.data)
+                switch(data.message) {
+                    case 'playerId':
+                        setPlayerId(data.value)
+                        break;
+                    case 'sendIdlePlayers':
+                        data.value.forEach(p=>addPlayer(p))
+                        break;
+                    case 'confirmAccept':
+                        confirmGame(data.value)
+                        break
+                    case 'turn':
+                        resetTo(data.value)
+                        break
+                    case 'update':
+                        update(data.value)
+                        break
+                    case 'winner':
+                        winner(data.value)
+                        break;
+                    case 'removeIdlePlayer':
+                        removePlayer(data.value)
+                        break;
+                    case 'leftGame':
+                        showGameLeft()
+                        break
+                }
+            };
+
+        }
+
+        function disconnect() {
+            if (ws != null) {
+                if(pid!=null) {
+                    ws.send(JSON.stringify({'message':'unregister','value': pid}));
+                }
+                ws.close();
+            }
+        }
+
+        function register() {
+            ws.send(JSON.stringify({'message':'register','value': $("#name").val()}));
+            $("#nameBlock").hide()
+            $("#players").show()
+        }
+
+        function selectPlayer(player) {
+            ws.send(JSON.stringify({'message':'selectPlayer','value': player}));
+
+        }
+
+        function confirmGame(player) {
+            const answer = confirm("Player " + player.name + " wants to play with you.\nAre you sure?")
+            if(answer) {
+                createGroup(player.index, pid)
+            }
+        }
+
+        function createGroup(inviter, invitee) {
+            ws.send(JSON.stringify({'message':'createGroup','value': [inviter, invitee, n]}));
+            $("#players").hide()
+            $("#main-table").show()
+            disabledButtons()
+
+        }
+
+        function enableOrDisableLine(occupied, index) {
+            if(occupied) {
+                disableLine(index)
+            } else {
+                enableLine(index)
+            }
+        }
+
+        function disableLine(index) {
+            if(!$("#line_"+index).hasClass("disabled")) {
+                $("#line_"+index).addClass("disabled")
+            }
+            $("#line_"+index).attr("disabled", true);
+
+        }
+
+        function enableLine(index) {
+            if($("#line_"+index).hasClass("disabled")) {
+                $("#line_"+index).removeClass("disabled")
+            }
+            $("#line_"+index).attr("disabled", false);
+
+        }
+
+        function resetTo(value) {
+            $("#players").hide()
+            $("#main-table").show()
+            value.lines.forEach((occupied, index)=>{
+                enableOrDisableLine(occupied, index)
+
+            })
+
+            value.boxes.forEach((name, index)=> {
+                $("#box_"+index).text(name)
+            })
+        }
+
+        function update(boxes) {
+
+            boxes.forEach((name, index)=> {
+                $("#box_"+index).text(name)
+            })
+        }
+
+        function disabledButtons() {
+            $.each($("button[id^='line_']").map((_,b)=>b.id.split("_")[1]), (_,index)=>disableLine(index))
+        }
+
+        function showIdlePlayers(players) {
+
+        }
+
+        function setPlayerId(id) {
+            pid = id
+        }
+
+
+        function setTurn(value) {
+            ws.send(JSON.stringify({'message':'turn','value': value}));
+            $("#message").val("");
+        }
+
+        function addPlayer(p) {
+            $("#players").append("<button class='btn btn-primary btn-block' id='player_"+p.index+"' onclick='selectPlayer("+p.index+")'>"+p.name+"</button>")
+        }
+
+        function removePlayer(p) {
+            $("#player_"+p.index).remove()
+        }
+
+        function playerNameChanged() {
+            if($('#name').val()) {
+                $('#generate').removeClass('disabled')
+                $('#generate').attr('disabled', false)
+            }
+            else  {
+                $('#generate').addClass('disabled')
+                $('#generate').attr('disabled', true)
+            }
+
+        }
+
+        function selectLine(index) {
+            ws.send(JSON.stringify({'message':'selectLine','value': index}));
+            disabledButtons()
+        }
+
+        function winner(w) {
+            disabledButtons()
+            //$("#main-table").hide()
+            $("#winner").show()
+            $("#winner").text("Winner is "+w)
+        }
+
+        function showGameLeft() {
+            disabledButtons()
+            //$("#main-table").hide()
+            $("#winner").show()
+            $("#winner").text("Other user Left Game")
+        }
+
+  </script>
+  <style>
+      .horizontal-button {
+          height: 20px;
+      }
+      
+      .vertical-button {
+          width: 20px
+      }
+      
+      td {
+          margin: 0;
+          padding 0;
+      }
+      
+      .btn {
+          height: 100%;
+          width: 100%;
+      }
+
+      .box {
+        vertical-align: middle;
+        text-align: center;
+      }
+
+      #winner {
+        font-size: 50px
+      }
+    </style>
+</head>
+<body>
+<center>
+    <table th:id="main-table">
+      <div  th:each="i, stat1 : ${#numbers.sequence( 1, n)}" th:remove="tag">
+          <tr>
+              <td>
+              </td>
+              <div  th:each="i, stat2 : ${#numbers.sequence( 1, n)}" th:remove="tag">
+                  <td class="horizontal-button">
+                      <button  class="btn btn-primary btn-block" th:onclick="selectLine([[${stat1.index*(2*n+1)+stat2.index}]])" th:id="${'line_'+(stat1.index*(2*n+1)+stat2.index)}">
+
+                      </button>
+                  </td>
+                  <td>
+                  </td>
+
+              </div>
+          </tr>
+          <tr>
+              <td class="vertical-button">
+
+                  <button  class="btn btn-primary btn-block" th:onclick="selectLine([[${stat1.index*(2*n+1)+n}]])"  th:id="${'line_'+(stat1.index*(2*n+1)+n)}">
+
+                  </button>
+              </td>
+              <div  th:each="i, stat2 : ${#numbers.sequence( 1, n)}" th:remove="tag">
+                  <td class="box" th:id="${'box_'+(stat1.index*n+stat2.index)}">
+                  </td>
+                  <td class="vertical-button">
+
+                      <button  class="btn btn-primary btn-block" th:onclick="selectLine([[${stat1.index*(2*n+1)+n+stat2.index+1}]])" th:id="${'line_'+(stat1.index*(2*n+1)+n+stat2.index+1)}">
+
+                      </button>
+                  </td>
+              </div>
+
+          </tr>
+
+      </div>
+      <tr>
+          <td>
+          </td>
+          <div  th:each="i, stat1 : ${#numbers.sequence( 1, n)}" th:remove="tag">
+              <td class="horizontal-button">
+                  <button  class="btn btn-primary btn-block" th:onclick="selectLine([[${n*(2*n+1)+stat1.index}]])" th:id="${'line_'+(n*(2*n+1)+stat1.index)}">
+
+                  </button>
+              </td>
+              <td>
+              </td>
+
+          </div>
+      </tr>
+
+  </table>
+    <div id="nameBlock" class="input-group input-group-lg has-error has-feedback nm" style="position: absolute; top: 0">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1">
+                Select Player
+            </span>
+        </div>
+        <input type="text" tabindex="1"
+                  class="form-control basicAutoComplete cfc"
+                  placeholder="Enter Formula to Differentiate"
+                  aria-label="Large"
+                  autocomplete="on"
+               id="name"
+               onkeypress="playerNameChanged()"
+               onchange="playerNameChanged()"
+        >
+        <div class="input-group-append">
+            <button disabled class="btn btn-primary" type="button" id="generate" onclick="register()">Submit</button>
+        </div>
+    </div>
+    <div id="players">
+        Players Available
+    </div>
+    <div id="winner" style="position: absolute; top:0"></div>
+</center>
+</body>
+</html>
