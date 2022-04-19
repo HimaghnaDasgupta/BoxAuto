@@ -31,7 +31,7 @@
 
         function connect() {
             /*<![CDATA[*/
-            var url = '[['ws://'+${#httpServletRequest.serverName}+':'+${#httpServletRequest.serverPort}+@{/web-socket}]]'
+            var url = '[['wss://'+${#httpServletRequest.serverName}+':'+${#httpServletRequest.serverPort}+@{/web-socket}]]'
             /*]]>*/
             ws = new WebSocket(url);
             ws.onopen = function () {
