@@ -121,11 +121,10 @@ class MyTextWebSocketHandler : TextWebSocketHandler() {
 
             MessageType.createGroup -> {
                 val group = m.value as List<Int>
-                val n = group.last()
 
-                val box = Box(n)
+                val box = Box(ns[uid]!!)
 
-                group.indices.filter { it<group.size-1 }.forEach {
+                group.indices.forEach {
                     try {
                         boxes[group[it]] = box
                         playerIndex[group[it]] = BoxPlayer.values()[it+1]
@@ -134,8 +133,15 @@ class MyTextWebSocketHandler : TextWebSocketHandler() {
                         log.error("Error occurred.", e)
                     }
                 }
-                groups.add(listOf(group[0], group[1]))
+                groups.add(group)
                 val playerNames = arrayOf("", users[group[0]], users[group[1]])
+                group.forEach {
+                    if(playerIndex[it]==box.player) {
+                        sessions[it]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.turnMessage, "Your"))))
+                    } else {
+                        sessions[it]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.turnMessage, "Opponent"))))
+                    }
+                }
                 try {
                     sessions[group[0]]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.turn, BoxStatus(box.lines, box.boxes.map { playerNames[it.ordinal]!!})))))
                 } catch (e: IOException) {
@@ -145,13 +151,31 @@ class MyTextWebSocketHandler : TextWebSocketHandler() {
             }
 
 
+            MessageType.resetGame -> {
+                val group = groups.first { it.contains(uid) }
+
+                try {
+                    sessions[group.first { it!=uid }]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.confirmAccept, Player(uid, users[uid]!!)))))
+                } catch (e: IOException) {
+                    log.error("Error occurred.", e)
+                }
+            }
+
+
             MessageType.selectLine -> {
                 val newBox = boxes[uid]!!.setOccupiedLine(m.value as Int)
                 val group = groups.first { it.contains(uid) }
-                val playerNames = arrayOf("", users[group[0]], users[group[1]])
+                val playerNames = arrayOf("None", users[group[0]], users[group[1]])
                 playerTurn[uid] = newBox.player
                 group.forEach { boxes[it] = newBox }
-                if(newBox.winner==BoxPlayer.None || newBox.winner == null) {
+                if(newBox.winner == null) {
+                    group.forEach {
+                        if(playerIndex[it]==newBox.player) {
+                            sessions[it]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.turnMessage, "Your"))))
+                        } else {
+                            sessions[it]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.turnMessage, "Opponent"))))
+                        }
+                    }
                     if(playerIndex[uid]==newBox.player) {
                         sessions[uid]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.turn, BoxStatus(newBox.lines, newBox.boxes.map { playerNames[it.ordinal]!!})))))
                         sessions[group.first { it!=uid }]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.update, newBox.boxes.map { playerNames[it.ordinal]!!}))))
@@ -162,7 +186,7 @@ class MyTextWebSocketHandler : TextWebSocketHandler() {
                 } else {
                     group.forEach {
                         sessions[it]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.turn, BoxStatus(newBox.lines, newBox.boxes.map { player->playerNames[player.ordinal]!!})))))
-                        sessions[it]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.winner, users[group.first { id->playerIndex[id]==newBox.winner }]))))
+                        sessions[it]!!.sendMessage(TextMessage(mapper.writeValueAsString(Message(MessageType.winner, if(newBox.winner==BoxPlayer.None) "None" else users[group.first { id->playerIndex[id]==newBox.winner }]))))
                     }
 
                 }
@@ -184,8 +208,10 @@ enum class MessageType {
     selectPlayer,
     confirmAccept,
     createGroup,
+    resetGame,
     selectLine,
     leftGame,
+    turnMessage,
     turn,
     update,
     winner

@@ -1,14 +1,19 @@
 package box.auto.controller
 
 //import box.auto.Box
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Controller
 import org.springframework.ui.ModelMap
 import org.springframework.ui.set
 import org.springframework.web.bind.annotation.*
 import javax.servlet.http.HttpServletResponse
+import kotlin.properties.Delegates
 
 @Controller
 class Controllers {
+
+    @Value(value = "\${box.auto.https}")
+    private var https: Boolean = true
 //    @Autowired
 //    lateinit var boxes: List<Box<*>>
 //    lateinit var running: MutableMap<Int, Boolean>
@@ -36,6 +41,7 @@ class Controllers {
     @PostMapping(value = ["/board-{n}"])
     fun index(@PathVariable n:Int, map: ModelMap): String {
         map["n"] = n
+        map["https"] = https
         return "index"
     }
 

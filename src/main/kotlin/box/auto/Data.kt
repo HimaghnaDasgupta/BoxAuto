@@ -25,10 +25,16 @@ class Box (val n: Int = 3, val line:Long=0, var box: Long=0, val player: BoxPlay
     init {
         box = occupy(line, box)
         val map = mutableMapOf(Pair(BoxPlayer.None, 0), Pair(BoxPlayer.A, 0), Pair(BoxPlayer.B, 0))
-        (0 until n*n).map { getBoxOccupiedBy(it) }.forEach { map[it] = map[it]!! + 1 }
+        val occupied = (0 until n*n).map { getBoxOccupiedBy(it) }
+        occupied.forEach { map[it] = map[it]!! + 1 }
         val max = map.keys.maxOf { map[it]!! }
         if(max > n*n/2) {
             winner = map.keys.first { map[it] == max }
+            if(winner==BoxPlayer.None) {
+                winner = null
+            }
+        } else if(map.keys.first { map[it] == max } != BoxPlayer.None) {
+            winner = BoxPlayer.None
         }
     }
 
@@ -138,6 +144,8 @@ class Box (val n: Int = 3, val line:Long=0, var box: Long=0, val player: BoxPlay
             }
         }
         println()
+
+        println("Winner: $winner")
     }
 
     override fun equals(other: Any?): Boolean {

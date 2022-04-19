@@ -25,12 +25,13 @@
           $("#main-table").hide()
           $("#players").hide()
           $("#winner").hide()
+          $("#waitingMessage").hide()
           connect()
         });
 
         function connect() {
             /*<![CDATA[*/
-            var url = '[['wss://'+${#httpServletRequest.serverName}+':'+${#httpServletRequest.serverPort}+@{/web-socket}]]'
+            var url = '[['ws'+(${https}?'s':'')+'://'+${#httpServletRequest.serverName}+':'+${#httpServletRequest.serverPort}+@{/web-socket}]]'
             /*]]>*/
             ws = new WebSocket(url);
             ws.onopen = function () {
@@ -48,6 +49,9 @@
                     case 'confirmAccept':
                         confirmGame(data.value)
                         break
+                    case 'turnMessage':
+                        showTurn(data.value)
+                        break;
                     case 'turn':
                         resetTo(data.value)
                         break
@@ -85,18 +89,19 @@
 
         function selectPlayer(player) {
             ws.send(JSON.stringify({'message':'selectPlayer','value': player}));
-
+            $("#waitingMessage").show()
         }
 
         function confirmGame(player) {
             const answer = confirm("Player " + player.name + " wants to play with you.\nAre you sure?")
             if(answer) {
+                readyGame()
                 createGroup(player.index, pid)
             }
         }
 
         function createGroup(inviter, invitee) {
-            ws.send(JSON.stringify({'message':'createGroup','value': [inviter, invitee, n]}));
+            ws.send(JSON.stringify({'message':'createGroup','value': [inviter, invitee]}));
             $("#players").hide()
             $("#main-table").show()
             disabledButtons()
@@ -134,9 +139,14 @@
 
         }
 
+        function showTurn(player) {
+            $("#turn").text(player)
+        }
+
         function resetTo(value) {
             $("#players").hide()
             $("#main-table").show()
+            $("#waitingMessage").hide()
             value.lines.forEach((occupied, index)=>{
                 enableOrDisableLine(occupied, index)
 
@@ -173,7 +183,7 @@
         }
 
         function addPlayer(p) {
-            $("#players").append("<button class='btn btn-primary btn-block' id='player_"+p.index+"' onclick='selectPlayer("+p.index+")'>"+p.name+"</button>")
+            $("#player_list").append("<button class='btn btn-primary btn-block' id='player_"+p.index+"' onclick='selectPlayer("+p.index+")'>"+p.name+"</button>")
         }
 
         function removePlayer(p) {
@@ -212,6 +222,28 @@
             $("#message").text("Other user Left Game")
         }
 
+        function readyGame() {
+            $.each($("button[id^='line_']"), (_,button)=>{
+                if($(button).hasClass('active')) {
+                    $(button).removeClass('active')
+                }
+            })
+
+            $.each($("td[id^='box_']"), (_,td)=>{
+                $(td).text('')
+            })
+            $("#main-table").show()
+            $("#players").hide()
+            $("#player_list").children("*").remove()
+            $("#winner").hide()
+        }
+
+        function resetAll() {
+            readyGame()
+            $("#waitingMessage").show()
+            ws.send(JSON.stringify({'message':'resetGame','value':''}));
+        }
+
   </script>
   <style>
       .horizontal-button {
@@ -237,7 +269,7 @@
         text-align: center;
       }
 
-      #winner {
+      .alert {
         font-size: 50px
       }
     </style>
@@ -245,9 +277,15 @@
 <body>
 <center>
     <table th:id="main-table">
+
       <div  th:each="i, stat1 : ${#numbers.sequence( 1, n)}" th:remove="tag">
           <tr>
               <td>
+                  <span style="position: absolute; top:0; left: 0; opacity: 0.6" class="alert alert-info">
+                    Turn:
+                    <br/>
+                    <span id="turn"></span>
+                </span>
               </td>
               <div  th:each="i, stat2 : ${#numbers.sequence( 1, n)}" th:remove="tag">
                   <td class="horizontal-button">
@@ -319,12 +357,20 @@
     </table>
     <div id="players">
         Players Available
+        <div id="player_list">
+
+        </div>
     </div>
     <div id="winner" class="alert alert-info" style="position: absolute; top:0; width: 100%; text-align: center; opacity: 0.8;">
         <div id="message"></div>
-        <form th:action="${'/board-'+n}" method="post">
-            <button class="btn btn-primary" type="submit">Reset</button>
-        </form>
+        <button class="btn btn-primary" onclick="resetAll()">Play again</button>
+    </div>
+    <div id="waitingMessage" class="alert alert-info" style="position: absolute; top:0; width: 100%; text-align: center; opacity: 0.8;">
+        Please wait
+        <br/>
+        while other user
+        <br/>
+        is responding
     </div>
 </center>
 </body>
