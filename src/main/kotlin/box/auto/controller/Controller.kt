@@ -31,6 +31,11 @@ class Controllers {
 //
 //    }
 
+    @GetMapping(value = ["/"])
+    fun home(): String {
+        return "home"
+    }
+
     @GetMapping(value = ["/board-{n}"])
     fun index(@PathVariable n:Int, map: ModelMap): String {
         map["n"] = n
