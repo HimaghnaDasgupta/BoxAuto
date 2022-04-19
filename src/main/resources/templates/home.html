@@ -7,33 +7,60 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" th:href="@{css/common.css}">
+    <script>
+        function resize() {
+          const dim= Math.floor($(window).height() / 2)
+          $(".row").css("height", dim);
+          $(".btn").css("height", dim);
+        }
 
+        $(document).ready(function(){
+          resize()
+          $(window).resize(function() {
+              resize()
+          })
+        })
+    </script>
+    <style>
+        .btn {
+            text-align: center;
+            vertical-align: center;
+            font-size: 100px;
+        }
+    </style>
 </head>
 <body style="height: 100%" class="h-100">
 <div class="container-fluid h-100">
     <div class="row" >
-        <div class="col-6 bg-gray h-100" style="text-align: center;">
-            <a class="btn btn-primary btn-block" href="/board-2">
-                2 X 2
-            </a>
+        <div class="col-xs-6 bg-gray h-100" style="text-align: center; padding:0; margin:0;">
+            <form action="/board-2" method="post">
+                <button class="btn btn-primary btn-block" type="submit">
+                    2 X 2
+                </button>
+            </form>
         </div>
-        <div class="col-6 bg-gray h-100" style="text-align: center;">
-            <a class="btn btn-primary btn-block" href="/board-3">
-                3 X 3
-            </a>
+        <div class="col-xs-6 bg-gray h-100" style="text-align: center; padding:0; margin:0;">
+            <form action="/board-3" method="post">
+                <button class="btn btn-primary btn-block" type="submit">
+                    3 X 3
+                </button>
+            </form>
         </div>
     </div>
     <div class="row" >
-        <div class="col-6 bg-gray h-100" style="text-align: center;">
-            <a class="btn btn-primary btn-block" href="/board-4">
-                4 X 4
-            </a>
+        <div class="col-xs-6 bg-gray h-100" style="text-align: center; padding:0; margin:0;">
+            <form action="/board-4" method="post">
+                <button class="btn btn-primary btn-block" type="submit">
+                    4 X 4
+                </button>
+            </form>
         </div>
-        <div class="col-6 bg-gray h-100" style="text-align: center;">
-            <a class="btn btn-primary btn-block" href="/board-5">
+        <div class="col-xs-6 bg-gray h-100" style="text-align: center; padding:0; margin:0;">
+            <form action="/board-5" method="post">
+            <button class="btn btn-primary btn-block" type="submit">
                 5 X 5
-            </a>
+            </button>
+            </form>
         </div>
     </div>
 </div>

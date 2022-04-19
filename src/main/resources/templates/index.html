@@ -16,22 +16,21 @@
           $(".vertical-button").attr("height", dim);
       }
       $(document).ready(function(){
+          window.history.replaceState({}, '', '/')
           resize()
           $(window).resize(function() {
               resize()
           })
-<!--          $(window).on("beforeunload", function() {-->
-<!--            disconnect()-->
-<!--            return true-->
-<!--          })-->
+
           $("#main-table").hide()
           $("#players").hide()
+          $("#winner").hide()
           connect()
         });
 
         function connect() {
             /*<![CDATA[*/
-            var url = '[['wss://'+${#httpServletRequest.serverName}+':'+${#httpServletRequest.serverPort}+@{/web-socket}]]'
+            var url = '[['ws'+${#httpServletRequest.protocol.endsWith("s")?"s":""}+'://'+${#httpServletRequest.serverName}+':'+${#httpServletRequest.serverPort}+@{/web-socket}]]'
             /*]]>*/
             ws = new WebSocket(url);
             ws.onopen = function () {
@@ -106,10 +105,17 @@
 
         function enableOrDisableLine(occupied, index) {
             if(occupied) {
-                disableLine(index)
+                activeLine(index)
             } else {
                 enableLine(index)
             }
+        }
+
+        function activeLine(index) {
+            if(!$("#line_"+index).hasClass("active")) {
+                $("#line_"+index).addClass("active")
+            }
+            $("#line_"+index).attr("disabled", true);
         }
 
         function disableLine(index) {
@@ -187,6 +193,7 @@
         }
 
         function selectLine(index) {
+            activeLine(index)
             ws.send(JSON.stringify({'message':'selectLine','value': index}));
             disabledButtons()
         }
@@ -195,14 +202,14 @@
             disabledButtons()
             //$("#main-table").hide()
             $("#winner").show()
-            $("#winner").text("Winner is "+w)
+            $("#message").text("Winner is "+w)
         }
 
         function showGameLeft() {
             disabledButtons()
             //$("#main-table").hide()
             $("#winner").show()
-            $("#winner").text("Other user Left Game")
+            $("#message").text("Other user Left Game")
         }
 
   </script>
@@ -290,29 +297,35 @@
       </tr>
 
   </table>
-    <div id="nameBlock" class="input-group input-group-lg has-error has-feedback nm" style="position: absolute; top: 0">
-        <div class="input-group-prepend">
-            <span class="input-group-text" id="basic-addon1">
-                Select Player
-            </span>
-        </div>
-        <input type="text" tabindex="1"
-                  class="form-control basicAutoComplete cfc"
-                  placeholder="Enter Formula to Differentiate"
-                  aria-label="Large"
-                  autocomplete="on"
-               id="name"
-               onkeypress="playerNameChanged()"
-               onchange="playerNameChanged()"
-        >
-        <div class="input-group-append">
-            <button disabled class="btn btn-primary" type="button" id="generate" onclick="register()">Submit</button>
-        </div>
-    </div>
+    <table id="nameBlock" style="position: absolute; top: 0; width: 100%">
+        <tr>
+            <td width="90%">
+                <input type="text" tabindex="1"
+                       placeholder="Enter Your Name"
+                       aria-label="Large"
+                       autocomplete="on"
+                       id="name"
+                       onkeypress="playerNameChanged()"
+                       onchange="playerNameChanged()"
+                       style="width: 100%"
+                >
+            </td>
+
+            <td width="10%">
+                <button disabled class="btn btn-primary" type="button" id="generate" onclick="register()" style="width: 100%">Submit</button>
+            </td>
+        </tr>
+
+    </table>
     <div id="players">
         Players Available
     </div>
-    <div id="winner" style="position: absolute; top:0"></div>
+    <div id="winner" class="alert alert-info" style="position: absolute; top:0; width: 100%; text-align: center; opacity: 0.8;">
+        <div id="message"></div>
+        <form th:action="${'/board-'+n}" method="post">
+            <button class="btn btn-primary" type="submit">Reset</button>
+        </form>
+    </div>
 </center>
 </body>
 </html>

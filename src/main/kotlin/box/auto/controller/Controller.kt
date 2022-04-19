@@ -4,10 +4,7 @@ package box.auto.controller
 import org.springframework.stereotype.Controller
 import org.springframework.ui.ModelMap
 import org.springframework.ui.set
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.*
 import javax.servlet.http.HttpServletResponse
 
 @Controller
@@ -36,7 +33,7 @@ class Controllers {
         return "home"
     }
 
-    @GetMapping(value = ["/board-{n}"])
+    @PostMapping(value = ["/board-{n}"])
     fun index(@PathVariable n:Int, map: ModelMap): String {
         map["n"] = n
         return "index"
