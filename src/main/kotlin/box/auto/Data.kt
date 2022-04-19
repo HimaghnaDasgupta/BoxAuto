@@ -33,7 +33,7 @@ class Box (val n: Int = 3, val line:Long=0, var box: Long=0, val player: BoxPlay
             if(winner==BoxPlayer.None) {
                 winner = null
             }
-        } else if(map.keys.first { map[it] == max } != BoxPlayer.None) {
+        } else if(map.keys.first { map[it] == max } != BoxPlayer.None && map[BoxPlayer.None]==0) {
             winner = BoxPlayer.None
         }
     }
