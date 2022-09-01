@@ -1,7 +1,5 @@
 package box.auto
 
-//import box.auto.repositories.Box2Repositories
-import jdk.nashorn.internal.objects.Global
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
